@@ -2,6 +2,7 @@
   "name": "oficina-de-dança-renata-guimarães---instagram-bio-landing-page",
   "private": true,
   "version": "0.0.0",
+  "homepage": "https://Pedroou.github.io/OD-Renata-Guimar-es-Bio-Landing-Page",
   "type": "module",
   "scripts": {
     "dev": "vite",
