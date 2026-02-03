@@ -38,7 +38,7 @@ const PublicView: React.FC = () => {
   const PageIcon = getIcon(currentPage.iconName);
 
   return (
-    <div className="min-h-screen w-full relative overflow-hidden bg-rose-300 text-slate-900 selection:bg-rose-200">
+    <div className="min-h-[100dvh] w-full relative overflow-hidden bg-rose-300 text-slate-900 selection:bg-rose-200">
       
       {/* Background System */}
       <div className="fixed inset-0 z-0 pointer-events-none">
@@ -55,7 +55,7 @@ const PublicView: React.FC = () => {
       </div>
 
       {/* Main Content */}
-      <main className="relative z-10 min-h-screen flex flex-col items-center justify-start px-4 pt-20 pb-12 md:pt-32 md:pb-16">
+      <main className="relative z-10 min-h-[100dvh] flex flex-col items-center justify-start px-4 pt-20 pb-12 md:pt-32 md:pb-16">
         
         <div className="w-full max-w-md flex flex-col items-center">
           <Logo />

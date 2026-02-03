@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  html, body {
+    @apply bg-rose-300 min-h-screen;
+  }
+}
+
 @layer utilities {
     .animation-delay-2000 {
       animation-delay: 2s;
