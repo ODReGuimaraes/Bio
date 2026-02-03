@@ -11,6 +11,19 @@ const LinkButton: React.FC<ButtonProps> = ({ item, index, onClick }) => {
   const [isHovered, setIsHovered] = useState(false);
   
   const Icon = getIcon(item.iconName);
+
+  // Helper to handle local vs external URLs
+  const getHref = (url?: string) => {
+    if (!url) return '#';
+    if (url.startsWith('http') || url.startsWith('mailto:') || url.startsWith('tel:')) return url;
+    
+    // It's a local path, prepend base URL for GitHub Pages
+    const baseUrl = import.meta.env.BASE_URL;
+    const cleanUrl = url.startsWith('/') ? url.slice(1) : url;
+    const cleanBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+    
+    return `${cleanBase}${cleanUrl}`;
+  };
   
   // Decide element based on type
   // If we have an onClick, we use button (usually for navigation items or special actions)
@@ -20,7 +33,7 @@ const LinkButton: React.FC<ButtonProps> = ({ item, index, onClick }) => {
   
   const props = isButton 
     ? { onClick } 
-    : { href: item.url, target: "_blank", rel: "noopener noreferrer" };
+    : { href: getHref(item.url), target: "_blank", rel: "noopener noreferrer" };
 
   return (
     // @ts-ignore
