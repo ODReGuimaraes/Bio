@@ -38,12 +38,11 @@ const PublicView: React.FC = () => {
   const PageIcon = getIcon(currentPage.iconName);
 
   return (
-    <div className="min-h-[100dvh] w-full relative overflow-hidden bg-rose-300 text-slate-900 selection:bg-rose-200">
+    <div className="min-h-[100dvh] w-full relative overflow-hidden text-slate-900 selection:bg-rose-200">
       
       {/* Background System */}
       <div className="fixed inset-0 z-0 pointer-events-none">
-        {/* Base Gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-rose-300 via-pink-400 to-rose-300" />
+        {/* Base Gradient - Moved to body in index.css */}
         
         {/* Animated Orbs */}
         <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-40 animate-blob" />

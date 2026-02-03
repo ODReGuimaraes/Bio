@@ -4,7 +4,7 @@
 
 @layer base {
   html, body {
-    @apply bg-rose-300 min-h-screen;
+    @apply min-h-[100dvh] bg-gradient-to-br from-rose-300 via-pink-400 to-rose-300 bg-fixed;
   }
 }
 
