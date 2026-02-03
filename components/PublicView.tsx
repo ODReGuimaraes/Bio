@@ -41,14 +41,14 @@ const PublicView: React.FC = () => {
     <div className="min-h-[100dvh] w-full relative overflow-hidden bg-[#EF62A2] text-slate-900 selection:bg-rose-200">
       
       {/* Background System */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
+      <div className="fixed inset-0 z-0 pointer-events-none transform-gpu">
         {/* Base Gradient */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#EF62A2] via-pink-500 to-[#EF62A2]" />
         
         {/* Animated Orbs */}
-        <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-40 animate-blob" />
-        <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-pink-200 rounded-full mix-blend-multiply filter blur-3xl opacity-40 animate-blob animation-delay-2000" />
-        <div className="absolute -bottom-32 left-20 w-96 h-96 bg-rose-200 rounded-full mix-blend-multiply filter blur-3xl opacity-40 animate-blob animation-delay-4000" />
+        <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-40 animate-blob will-change-transform" />
+        <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-pink-200 rounded-full mix-blend-multiply filter blur-3xl opacity-40 animate-blob animation-delay-2000 will-change-transform" />
+        <div className="absolute -bottom-32 left-20 w-96 h-96 bg-rose-200 rounded-full mix-blend-multiply filter blur-3xl opacity-40 animate-blob animation-delay-4000 will-change-transform" />
         
         {/* Noise Overlay */}
         <div className="absolute inset-0 opacity-[0.03] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] brightness-100 contrast-150" />

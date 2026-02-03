@@ -55,13 +55,13 @@ const LinkButton: React.FC<ButtonProps> = ({ item, index, onClick }) => {
       <div className={`
         relative overflow-hidden
         w-full h-14 md:h-16 
-        bg-white/95 backdrop-blur-sm 
+        bg-white/95 
         rounded-2xl 
         flex items-center justify-center 
         shadow-[0_4px_20px_-5px_rgba(0,0,0,0.1)] 
         hover:shadow-[0_8px_30px_-5px_rgba(255,255,255,0.4)]
         transition-all duration-300 ease-out
-        border border-white/50
+        border border-white/50 transform-gpu will-change-transform
         group-hover:-translate-y-1
       `}>
         {/* Hover Gradient Overlay */}
