@@ -19,7 +19,7 @@ const Logo: React.FC = () => {
       {/* Actual Logo Container */}
       <div className="relative z-10 w-40 h-40 md:w-56 md:h-56 flex items-center justify-center transition-transform duration-500 hover:scale-105">
         <img 
-          src="/logo.png" 
+          src={import.meta.env.BASE_URL + "logo.png"}
           alt="Oficina de Dança Logo" 
           className="w-full h-full object-contain"
           onError={(e) => {
