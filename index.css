@@ -4,7 +4,8 @@
 
 @layer base {
   html, body {
-    @apply min-h-[100dvh] bg-gradient-to-br from-rose-300 via-pink-400 to-rose-300 bg-fixed;
+    @apply bg-[#EF62A2] min-h-screen;
+    background-color: #EF62A2; /* Fallback/Explicit */
   }
 }
 
