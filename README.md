@@ -44,7 +44,7 @@ A customizable "Link in Bio" landing page built for Oficina de Dança Renata Gui
     npm run dev
     ```
 
-4.  Open your browser and navigate to `http://localhost:5173` (or the port shown in your terminal).
+4.  Open your browser and navigate to `http://localhost:5173` (the port shown in your terminal).
 
 ## Scripts
 
