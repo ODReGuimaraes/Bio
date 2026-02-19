@@ -32,13 +32,31 @@ const LinkButton: React.FC<ButtonProps> = ({ item, index, onClick }) => {
   const isButton = !!onClick || item.type === 'nav';
   const Element = isButton ? motion.button : motion.a;
   
+  const isDataUrl = item.url?.startsWith('data:');
+
   const props = isButton 
     ? { onClick } 
-    : { href: getHref(item.url), target: "_blank", rel: "noopener noreferrer" };
+    : { 
+        href: getHref(item.url), 
+        // For data URLs, avoid target="_blank" to prevent "Not allowed to navigate top frame to data URL" error
+        // Instead, let it download in the current context
+        target: isDataUrl ? undefined : "_blank", 
+        rel: "noopener noreferrer",
+        download: isDataUrl ? item.label || 'download' : undefined
+      };
 
   return (
     // @ts-ignore
     <Element
+      {...props}
+      onClick={(e) => {
+        if (!isButton && isDataUrl) {
+           // Optional: If we want to force download behavior or handle differently
+           // But 'download' attribute on a tag usually works for data URLs in most browsers
+           // If it fails, constructing a Blob and opening it might be needed, but let's try download attr first
+        }
+        if (onClick) onClick();
+      }}
       {...props}
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}

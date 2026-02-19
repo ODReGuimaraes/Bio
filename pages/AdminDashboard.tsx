@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useContent } from '../context/ContentContext';
 import { PageItem, ContentItem, ItemType } from '../types';
 import { ICON_MAP, getIcon } from '../utils/iconMap';
-import { Trash2, Plus, GripVertical, LogOut, FileUp, Save } from 'lucide-react';
+import { Trash2, Plus, GripVertical, LogOut, FileUp, Save, Settings } from 'lucide-react';
 import { Reorder } from 'framer-motion';
+import { uploadFileToGitHub } from '../utils/github';
 
 const AdminDashboard: React.FC = () => {
   const { 
@@ -24,6 +25,9 @@ const AdminDashboard: React.FC = () => {
   const [selectedPageId, setSelectedPageId] = useState<string>('home');
   const [isAddingPage, setIsAddingPage] = useState(false);
   const [newPageTitle, setNewPageTitle] = useState('');
+  const [githubToken, setGithubToken] = useState<string>(sessionStorage.getItem('githubToken') || '');
+  const [showSettings, setShowSettings] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   
   // Item editing state
   const [editingItem, setEditingItem] = useState<Partial<ContentItem> | null>(null);
@@ -60,7 +64,13 @@ const AdminDashboard: React.FC = () => {
 
   const handleLogout = () => {
     sessionStorage.removeItem('isAdmin');
+    sessionStorage.removeItem('githubToken');
     navigate('/');
+  };
+
+  const handleSaveToken = () => {
+    sessionStorage.setItem('githubToken', githubToken);
+    setShowSettings(false);
   };
 
   const handleCreatePage = () => {
@@ -81,20 +91,36 @@ const AdminDashboard: React.FC = () => {
     e.preventDefault();
     if (!editingItem) return;
 
+    let finalUrl = editingItem.url;
+    
+    // Handle File Upload to GitHub
+    if (fileInput) {
+        if (!githubToken) {
+            alert("A GitHub Token is required to upload files. Please configure it in settings.");
+            setShowSettings(true);
+            return;
+        }
+
+        try {
+            setIsUploading(true);
+            finalUrl = await uploadFileToGitHub(fileInput, githubToken);
+            setIsUploading(false);
+        } catch (error) {
+            setIsUploading(false);
+            alert("Failed to upload to GitHub. Check your token and permissions.");
+            return;
+        }
+    }
+
     // Check if we are updating an existing item (it has an id)
     if (editingItem.id) {
         const updatedItem: any = {
             type: itemType,
             label: editingItem.label,
-            url: editingItem.url,
+            url: finalUrl,
             iconName: editingItem.iconName,
             targetPageId: editingItem.targetPageId
         };
-
-        // If specific logic for files needed
-        if (itemType === 'file' && !updatedItem.url && !fileInput) { 
-             // If no new file uploaded, we keep existing URL (handled by state)
-        }
 
         updateItemInPage(selectedPageId, editingItem.id, updatedItem);
     } else {
@@ -103,7 +129,7 @@ const AdminDashboard: React.FC = () => {
             id: Date.now().toString(),
             type: itemType,
             label: editingItem.label || 'New Item',
-            url: editingItem.url || '#',
+            url: finalUrl || '#',
             iconName: editingItem.iconName,
             targetPageId: editingItem.targetPageId
         } as any;
@@ -126,19 +152,23 @@ const AdminDashboard: React.FC = () => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
 
-      if (file.size > 1024 * 1024 * 2) {
-        alert("File size limit is 2MB for local storage.");
+      if (file.size > 1024 * 1024 * 5) { // Increased to 5MB for GitHub
+        alert("File size limit is 5MB.");
         return;
       }
 
       setFileInput(file);
-      
-      // Convert to Base64
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setEditingItem(prev => ({ ...prev, url: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
+      // We don't convert to base64 anymore for final storage, 
+      // but we might want to preview name in UI or pre-fill label
+      setEditingItem(prev => ({ 
+          ...prev, 
+          // We don't set 'url' here anymore to avoid the large base64 string
+          // being used as the final URL if upload fails or is skipped.
+          // Instead, url will be generated on save.
+          
+          // Use a temporary placeholder or keep existing, will be overwritten after upload
+          label: prev?.label || file.name 
+      }));
     }
   };
 
@@ -150,10 +180,39 @@ const AdminDashboard: React.FC = () => {
       <aside className="w-64 bg-white border-r border-slate-200 flex flex-col">
         <div className="p-4 border-b border-slate-100 flex justify-between items-center">
           <h1 className="font-bold text-slate-800">Painel Admin</h1>
-          <button onClick={handleLogout} className="text-slate-400 hover:text-rose-500">
-            <LogOut size={18} />
-          </button>
+          <div className="flex gap-2">
+            <button onClick={() => setShowSettings(true)} className="text-slate-400 hover:text-rose-500" title="Settings">
+                <Settings size={18} />
+            </button>
+            <button onClick={handleLogout} className="text-slate-400 hover:text-rose-500" title="Logout">
+                <LogOut size={18} />
+            </button>
+          </div>
         </div>
+
+        {/* Settings Modal */}
+        {showSettings && (
+            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+                <div className="bg-white rounded-lg p-6 max-w-sm w-full shadow-xl">
+                    <h3 className="font-bold text-lg mb-4">Configurações</h3>
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium mb-1">GitHub Personal Access Token</label>
+                        <p className="text-xs text-slate-500 mb-2">Required for uploading files.</p>
+                        <input 
+                            type="password" 
+                            className="w-full border rounded p-2 text-sm"
+                            value={githubToken}
+                            onChange={(e) => setGithubToken(e.target.value)}
+                            placeholder="ghp_..."
+                        />
+                    </div>
+                    <div className="flex justify-end gap-2">
+                        <button onClick={() => setShowSettings(false)} className="px-3 py-1 text-slate-500 hover:bg-slate-100 rounded">Cancel</button>
+                        <button onClick={handleSaveToken} className="px-3 py-1 bg-rose-500 text-white rounded hover:bg-rose-600">Save</button>
+                    </div>
+                </div>
+            </div>
+        )}
 
         {/* Save Bar */}
         <div className="p-3 bg-slate-50 border-b border-slate-200 flex bg-white flex-col gap-2">
