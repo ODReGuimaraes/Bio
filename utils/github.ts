@@ -22,8 +22,9 @@ export const uploadFileToGitHub = async (
   const base64Content = Buffer.from(content).toString('base64');
   
   // Use file name but maybe sanitize or add timestamp to avoid collisions?
-  // For now, simple filename is fine as requested.
-  const filePath = `${UPLOAD_PATH}/${file.name}`;
+  // For now, sanitize spaces and special chars to ensure URL safety
+  const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+  const filePath = `${UPLOAD_PATH}/${safeName}`;
   
   // Try to get existing file SHA to support updates
   let sha: string | undefined;
@@ -57,7 +58,7 @@ export const uploadFileToGitHub = async (
     // Return the deployed GitHub Pages URL
     // Format: https://<user>.github.io/<repo>/<path_relative_to_public>
     // Since we upload to `public/uploads`, the deployed URL is `uploads/<filename>`
-    return `https://${REPO_OWNER}.github.io/${REPO_NAME}/uploads/${file.name}`;
+    return `https://${REPO_OWNER}.github.io/${REPO_NAME}/uploads/${safeName}`;
   } catch (error) {
     console.error('Error uploading to GitHub:', error);
     throw error;
