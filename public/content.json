@@ -1,0 +1,85 @@
+{
+  "pages": [
+    {
+      "id": "home",
+      "items": [
+        {
+          "id": "1",
+          "type": "link",
+          "label": "Whatsapp",
+          "url": "https://wa.me/5551994051212?text=Ol%C3%A1!%20Eu%20gostaria%20de%20mais%20informa%C3%A7%C3%B5es.",
+          "iconName": "Whatsapp"
+        },
+        {
+          "id": "2",
+          "type": "link",
+          "label": "Youtube",
+          "url": "https://www.youtube.com/@oficinadedanca",
+          "iconName": "Youtube"
+        },
+        {
+          "id": "sep1",
+          "type": "separator"
+        },
+        {
+          "id": "3",
+          "type": "nav",
+          "label": "Valores",
+          "targetPageId": "valores",
+          "iconName": "Banknote"
+        },
+        {
+          "id": "4",
+          "type": "nav",
+          "label": "Horários",
+          "targetPageId": "horarios",
+          "iconName": "CalendarDays"
+        }
+      ]
+    },
+    {
+      "id": "valores",
+      "title": "Valores",
+      "iconName": "Banknote",
+      "items": [
+        {
+          "id": "v1",
+          "type": "file",
+          "label": "Ballet, Jazz e Tecido",
+          "url": "/valores-ballet.png"
+        },
+        {
+          "id": "v2",
+          "type": "file",
+          "label": "Dança Livre, Dança de Salão e Fitness",
+          "url": "/valores-fitness.png"
+        }
+      ]
+    },
+    {
+      "id": "horarios",
+      "title": "Horários",
+      "iconName": "CalendarDays",
+      "items": [
+        {
+          "id": "h1",
+          "type": "file",
+          "label": "Ballet",
+          "url": "/horarios-ballet.png"
+        },
+        {
+          "id": "h2",
+          "type": "file",
+          "label": "Jazz",
+          "url": "/horarios-jazz.png"
+        },
+        {
+          "id": "h3",
+          "type": "file",
+          "label": "Outras Modalidades",
+          "url": "/horarios-outras.png"
+        }
+      ]
+    }
+  ]
+}
