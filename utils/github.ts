@@ -11,7 +11,8 @@ const UPLOAD_PATH = 'public/uploads';
 
 export const uploadFileToGitHub = async (
   file: File,
-  token: string
+  token: string,
+  sha?: string | null
 ): Promise<string> => {
   const octokit = new Octokit({
     auth: token,
@@ -26,21 +27,24 @@ export const uploadFileToGitHub = async (
   const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
   const filePath = `${UPLOAD_PATH}/${safeName}`;
   
-  // Try to get existing file SHA to support updates
-  let sha: string | undefined;
-  try {
-    const { data } = await octokit.repos.getContent({
-      owner: REPO_OWNER,
-      repo: REPO_NAME,
-      path: filePath,
-    });
-    
-    // safe check if it's not a directory
-    if (data && !Array.isArray(data) && data.sha) {
-      sha = data.sha;
-    }
-  } catch (error) {
-    // If 404, file doesn't exist, proceed with creation
+  // Try to get existing file SHA to support updates if sha is not provided
+  let fileSha: string | undefined = sha === null ? undefined : sha;
+  
+  if (fileSha === undefined && sha !== null) {
+      try {
+        const { data } = await octokit.repos.getContent({
+          owner: REPO_OWNER,
+          repo: REPO_NAME,
+          path: filePath,
+        });
+        
+        // safe check if it's not a directory
+        if (data && !Array.isArray(data) && data.sha) {
+          fileSha = data.sha;
+        }
+      } catch (error) {
+        // If 404, file doesn't exist, proceed with creation
+      }
   }
 
   try {
@@ -50,7 +54,7 @@ export const uploadFileToGitHub = async (
       path: filePath,
       message: `Upload ${file.name} via Admin Dashboard`,
       content: base64Content,
-      sha: sha, // Include SHA if updating
+      sha: fileSha, // Include SHA if updating
     });
 
     console.log(`File uploaded successfully: ${result.data.content?.html_url}`);
@@ -77,9 +81,35 @@ export const uploadContentToGitHub = async (
   // Handle pending file uploads first
   if (pendingUploads && pendingUploads.size > 0) {
       console.log(`Processing ${pendingUploads.size} pending file uploads...`);
+      
+      // Fetch existing files in uploads directory once to avoid 404s for every file check
+      const existingFilesMap = new Map<string, string>();
+      try {
+          const { data } = await octokit.repos.getContent({
+              owner: REPO_OWNER,
+              repo: REPO_NAME,
+              path: UPLOAD_PATH,
+          });
+          
+          if (Array.isArray(data)) {
+              data.forEach(file => {
+                  if (file.type === 'file' && file.name) {
+                      existingFilesMap.set(file.name, file.sha);
+                  }
+              });
+          }
+      } catch (e) {
+          // Directory might not exist yet, treat as empty
+          console.log("Uploads directory not found or empty, proceeding with new uploads.");
+      }
+
       for (const [itemId, file] of pendingUploads.entries()) {
           try {
-              await uploadFileToGitHub(file, token);
+              const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+              // Pass existing SHA if found, otherwise explicitly null (new file)
+              const existingSha = existingFilesMap.get(safeName) || null;
+              
+              await uploadFileToGitHub(file, token, existingSha);
               console.log(`Successfully uploaded pending file for item ${itemId}: ${file.name}`);
           } catch (error) {
               console.error(`Failed to upload pending file for item ${itemId}: ${file.name}`, error);
