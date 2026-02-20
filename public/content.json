@@ -78,6 +78,13 @@
           "type": "file",
           "label": "Outras Modalidades",
           "url": "/horarios-outras.png"
+        },
+        {
+          "id": "1771621363566",
+          "type": "file",
+          "label": "tete",
+          "url": "https://odreguimaraes.github.io/Bio/uploads/buildingplan.png",
+          "iconName": "Phone"
         }
       ]
     }
