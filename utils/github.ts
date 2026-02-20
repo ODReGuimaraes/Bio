@@ -98,7 +98,55 @@ export const uploadContentToGitHub = async (
     path: filePath,
     message: `Update site content via Admin Dashboard`,
     content: base64Content,
-    sha: sha,
+    sha: sha, // Include SHA if updating
   });
+
+  // Extract all file names that determine used files
+  const usedFileNames = new Set<string>();
+  const pages = (content as any).pages || [];
+  
+  pages.forEach((page: any) => {
+    page.items?.forEach((item: any) => {
+        if (item.url && typeof item.url === 'string') {
+            // Check if it's a file uploaded to our repo
+            if (item.url.includes(`${REPO_OWNER}.github.io/${REPO_NAME}/uploads/`)) {
+                // Extract filename from URL - decodeURIComponent is important for spaces
+                const fileName = decodeURIComponent(item.url.split('/uploads/')[1]);
+                if (fileName) usedFileNames.add(fileName);
+            }
+        }
+    });
+  });
+
+  // Fetch all files currently in public/uploads and delete unused ones
+  try {
+      const { data: remoteFiles } = await octokit.repos.getContent({
+          owner: REPO_OWNER,
+          repo: REPO_NAME,
+          path: UPLOAD_PATH,
+      });
+
+      if (Array.isArray(remoteFiles)) {
+          // Iterate through all files in the remote folder
+          for (const file of remoteFiles) {
+              // Only consider files (not subdirectories) and check if they are NOT in use
+              if (file.type === 'file' && !usedFileNames.has(file.name)) {
+                  console.log(`Deleting unused file: ${file.name}`);
+                  
+                  // Delete the unused file
+                  await octokit.repos.deleteFile({
+                      owner: REPO_OWNER,
+                      repo: REPO_NAME,
+                      path: file.path,
+                      message: `Delete unused file ${file.name} via Admin Dashboard cleanup`,
+                      sha: file.sha,
+                  });
+              }
+          }
+      }
+  } catch (error) {
+      console.warn("Error cleaning up unused files (folder might be empty or other issue):", error);
+      // We don't throw here to avoid breaking the main save operation if cleanup fails
+  }
 };
 
