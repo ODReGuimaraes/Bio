@@ -19,7 +19,7 @@ const LinkButton: React.FC<ButtonProps> = ({ item, index, onClick }) => {
     if (url.startsWith('http') || url.startsWith('mailto:') || url.startsWith('tel:') || url.startsWith('data:')) return url;
     
     // It's a local path (from project files), prepend base URL for GitHub Pages
-    const baseUrl = import.meta.env.BASE_URL;
+    const baseUrl = import.meta.env.BASE_URL || '/';
     const cleanUrl = url.startsWith('/') ? url.slice(1) : url;
     const cleanBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
     
