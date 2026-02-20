@@ -67,11 +67,27 @@ export const uploadFileToGitHub = async (
 
 export const uploadContentToGitHub = async (
   content: object,
-  token: string
+  token: string,
+  pendingUploads?: Map<string, File>
 ): Promise<void> => {
   const octokit = new Octokit({
     auth: token,
   });
+
+  // Handle pending file uploads first
+  if (pendingUploads && pendingUploads.size > 0) {
+      console.log(`Processing ${pendingUploads.size} pending file uploads...`);
+      for (const [itemId, file] of pendingUploads.entries()) {
+          try {
+              await uploadFileToGitHub(file, token);
+              console.log(`Successfully uploaded pending file for item ${itemId}: ${file.name}`);
+          } catch (error) {
+              console.error(`Failed to upload pending file for item ${itemId}: ${file.name}`, error);
+              // We might want to throw here to stop the whole process if a critical file fails
+              // But for now, we continue so at least the JSON is updated and other files are uploaded
+          }
+      }
+  }
 
   const jsonString = JSON.stringify(content, null, 2);
   const base64Content = Buffer.from(jsonString).toString('base64');
