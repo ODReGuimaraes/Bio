@@ -78,13 +78,6 @@
           "type": "file",
           "label": "Outras Modalidades",
           "url": "/horarios-outras.png"
-        },
-        {
-          "id": "1771620289593",
-          "type": "file",
-          "label": "last-teste",
-          "url": "https://odreguimaraes.github.io/Bio/uploads/Planta_Baixa_Loja_Cameras_Pedro.png",
-          "iconName": "MapPin"
         }
       ]
     }
