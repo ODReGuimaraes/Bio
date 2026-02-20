@@ -18,7 +18,9 @@ const AdminDashboard: React.FC = () => {
     reorderItemsInPage,
     hasUnsavedChanges,
     saveChanges,
-    revertChanges
+    revertChanges,
+    publishChanges,
+    isPublishing
   } = useContent();
   const navigate = useNavigate();
   
@@ -71,6 +73,22 @@ const AdminDashboard: React.FC = () => {
   const handleSaveToken = () => {
     sessionStorage.setItem('githubToken', githubToken);
     setShowSettings(false);
+  };
+
+  const handleSave = async () => {
+      // If we have a token, publish to GitHub. 
+      // If not, we just save locally but warn the user? 
+      // The user requirement is persistence to repo.
+      if (!githubToken) {
+          const proceedLocal = window.confirm("No GitHub Token found. Changes will ONLY be saved to your browser cache and will NOT appear on the public site. Go to Settings to add a token?\n\nCancel to Open Settings, OK to Save Locally Only.");
+          if (!proceedLocal) {
+              setShowSettings(true);
+              return;
+          }
+          saveChanges();
+      } else {
+          await publishChanges(githubToken);
+      }
   };
 
   const handleCreatePage = () => {
@@ -206,15 +224,24 @@ const AdminDashboard: React.FC = () => {
                             placeholder="ghp_..."
                         />
                     </div>
-                    <div className="flex justify-end gap-2">
-                        <button onClick={() => setShowSettings(false)} className="px-3 py-1 text-slate-500 hover:bg-slate-100 rounded">Cancel</button>
-                        <button onClick={handleSaveToken} className="px-3 py-1 bg-rose-500 text-white rounded hover:bg-rose-600">Save</button>
-                    </div>
-                </div>
-            </div>
-        )}
-
-        {/* Save Bar */}
+                    <div handleSave}
+                disabled={!hasUnsavedChanges && !isPublishing}
+                className={`w-full py-2 rounded-lg font-bold flex items-center justify-center gap-2 transition-all ${
+                    hasUnsavedChanges || isPublishing
+                        ? 'bg-rose-500 text-white shadow-lg hover:bg-rose-600' 
+                        : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                }`}
+            >
+                {isPublishing ? (
+                    <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        Publicando...
+                    </>
+                ) : (
+                    <>
+                        <Save size={16} /> Salvar Site
+                    </>
+                )}
         <div className="p-3 bg-slate-50 border-b border-slate-200 flex bg-white flex-col gap-2">
             {hasUnsavedChanges && (
                 <div className="text-xs text-center text-amber-600 font-medium mb-1">

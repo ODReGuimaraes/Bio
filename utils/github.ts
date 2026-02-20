@@ -3,8 +3,8 @@ import { Buffer } from "buffer";
 
 // Repository Configuration
 // NOTE: Make sure these details match your repo exactly
-const REPO_OWNER = 'odreguimaraes';
-const REPO_NAME = 'Bio';
+export const REPO_OWNER = 'odreguimaraes';
+export const REPO_NAME = 'Bio';
 // The path in the repo where files will be stored.
 // If using Vite/Create-React-App, 'public/uploads' means they will appear at '/Bio/uploads/' after build.
 const UPLOAD_PATH = 'public/uploads';
@@ -63,5 +63,42 @@ export const uploadFileToGitHub = async (
     console.error('Error uploading to GitHub:', error);
     throw error;
   }
+};
+
+export const uploadContentToGitHub = async (
+  content: object,
+  token: string
+): Promise<void> => {
+  const octokit = new Octokit({
+    auth: token,
+  });
+
+  const jsonString = JSON.stringify(content, null, 2);
+  const base64Content = Buffer.from(jsonString).toString('base64');
+  const filePath = 'public/content.json';
+
+  let sha: string | undefined;
+  try {
+    const { data } = await octokit.repos.getContent({
+      owner: REPO_OWNER,
+      repo: REPO_NAME,
+      path: filePath,
+    });
+    
+    if (data && !Array.isArray(data) && data.sha) {
+      sha = data.sha;
+    }
+  } catch (error) {
+    // File doesn't exist, proceed with creation
+  }
+
+  await octokit.repos.createOrUpdateFileContents({
+    owner: REPO_OWNER,
+    repo: REPO_NAME,
+    path: filePath,
+    message: `Update site content via Admin Dashboard`,
+    content: base64Content,
+    sha: sha,
+  });
 };
 
