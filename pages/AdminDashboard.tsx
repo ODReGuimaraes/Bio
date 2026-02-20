@@ -224,8 +224,24 @@ const AdminDashboard: React.FC = () => {
                             placeholder="ghp_..."
                         />
                     </div>
-                    <div handleSave}
-                disabled={!hasUnsavedChanges && !isPublishing}
+                    <div className="flex justify-end gap-2">
+                        <button onClick={() => setShowSettings(false)} className="px-3 py-1 text-slate-500 hover:bg-slate-100 rounded">Cancel</button>
+                        <button onClick={handleSaveToken} className="px-3 py-1 bg-rose-500 text-white rounded hover:bg-rose-600">Save</button>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {/* Save Bar */}
+        <div className="p-3 bg-slate-50 border-b border-slate-200 flex bg-white flex-col gap-2">
+            {hasUnsavedChanges && (
+                <div className="text-xs text-center text-amber-600 font-medium mb-1">
+                    Alterações não salvas
+                </div>
+            )}
+            <button 
+                onClick={handleSave}
+                disabled={(!hasUnsavedChanges && !isPublishing) || isPublishing}
                 className={`w-full py-2 rounded-lg font-bold flex items-center justify-center gap-2 transition-all ${
                     hasUnsavedChanges || isPublishing
                         ? 'bg-rose-500 text-white shadow-lg hover:bg-rose-600' 
@@ -242,22 +258,6 @@ const AdminDashboard: React.FC = () => {
                         <Save size={16} /> Salvar Site
                     </>
                 )}
-        <div className="p-3 bg-slate-50 border-b border-slate-200 flex bg-white flex-col gap-2">
-            {hasUnsavedChanges && (
-                <div className="text-xs text-center text-amber-600 font-medium mb-1">
-                    Alterações não salvas
-                </div>
-            )}
-            <button 
-                onClick={saveChanges}
-                disabled={!hasUnsavedChanges}
-                className={`w-full py-2 rounded-lg font-bold flex items-center justify-center gap-2 transition-all ${
-                    hasUnsavedChanges 
-                        ? 'bg-rose-500 text-white shadow-lg hover:bg-rose-600' 
-                        : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                }`}
-            >
-                <Save size={16} /> Salvar
             </button>
             <button 
                 onClick={() => {
