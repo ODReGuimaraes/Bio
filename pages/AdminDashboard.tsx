@@ -255,7 +255,7 @@ const AdminDashboard: React.FC = () => {
                     </>
                 ) : (
                     <>
-                        <Save size={16} /> Salvar Site
+                        <Save size={16} /> Salvar
                     </>
                 )}
             </button>

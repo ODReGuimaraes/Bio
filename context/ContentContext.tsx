@@ -232,7 +232,9 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
       reorderItemsInPage,
       resetContent,
       saveChanges,
-      revertChanges
+      revertChanges,
+      publishChanges,
+      isPublishing
     }}>
       {children}
     </ContentContext.Provider>
