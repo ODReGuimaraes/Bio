@@ -78,8 +78,25 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
                 if (saved) {
                     try {
                         const parsed = JSON.parse(saved);
+                        
+                        // Compare with fetched data to see if there are actual changes
+                        // We check if the saved content is deeply equal to the fetched content
+                        // Using JSON.stringify for deep comparison (keys must be in same order, which they usually are for same structure)
+                        // If they match, we assume NO unsaved changes, even if localStorage exists.
+                        const hasDiff = JSON.stringify(parsed) !== JSON.stringify(data);
+                        
                         setDraftContent(parsed);
-                        setHasUnsavedChanges(true); // Treat local storage as unsaved changes vs remote
+                        // If the local content matches the remote content, we don't need to consider it "unsaved"
+                        // This fixes the issue where refreshing after a publish (even after propagation) shows "unsaved changes"
+                        // Also, if they are identical, we clear the local storage to avoid confusion if remote changes by another user
+                        if (JSON.stringify(parsed) === JSON.stringify(data)) {
+                             localStorage.removeItem(STORAGE_KEY);
+                             setHasUnsavedChanges(false);
+                        } else {
+                             setHasUnsavedChanges(true); // User has local changes or remote hasn't updated yet
+                        }
+                        
+                        setDraftContent(parsed);
                     } catch (e) {
                          setDraftContent(data);
                     }
@@ -128,9 +145,10 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
           setIsPublishing(true);
           await uploadContentToGitHub(draftContent, token);
           setContent(draftContent);
+          // Update local storage to reflect the latest published version
           localStorage.setItem(STORAGE_KEY, JSON.stringify(draftContent));
           setHasUnsavedChanges(false);
-          alert("Changes published successfully!");
+          alert("Changes published successfully! Note: It may take a few minutes for changes to appear on the public site.");
       } catch (error) {
           console.error("Failed to publish changes", error);
           alert("Failed to publish changes. Check console for details.");
