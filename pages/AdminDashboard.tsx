@@ -5,7 +5,7 @@ import { PageItem, ContentItem, ItemType } from '../types';
 import { ICON_MAP, getIcon } from '../utils/iconMap';
 import { Trash2, Plus, GripVertical, LogOut, FileUp, Save, Settings } from 'lucide-react';
 import { Reorder } from 'framer-motion';
-import { uploadFileToGitHub } from '../utils/github';
+import { uploadFileToGitHub, REPO_OWNER, REPO_NAME } from '../utils/github';
 
 const AdminDashboard: React.FC = () => {
   const { 
@@ -20,7 +20,8 @@ const AdminDashboard: React.FC = () => {
     saveChanges,
     revertChanges,
     publishChanges,
-    isPublishing
+    isPublishing,
+    setPendingUpload
   } = useContent();
   const navigate = useNavigate();
   
@@ -109,28 +110,24 @@ const AdminDashboard: React.FC = () => {
     e.preventDefault();
     if (!editingItem) return;
 
-    let finalUrl = editingItem.url;
-    
-    // Handle File Upload to GitHub
-    if (fileInput) {
-        if (!githubToken) {
-            alert("A GitHub Token is required to upload files. Please configure it in settings.");
-            setShowSettings(true);
-            return;
-        }
+    // Use current URL if available, otherwise just hashtag as placeholder
+    let finalUrl = editingItem.url || '#'; 
+    const newItemId = editingItem.id || Date.now().toString();
 
-        try {
-            setIsUploading(true);
-            finalUrl = await uploadFileToGitHub(fileInput, githubToken);
-            setIsUploading(false);
-        } catch (error) {
-            setIsUploading(false);
-            alert("Failed to upload to GitHub. Check your token and permissions.");
-            return;
-        }
+    // Handle File Upload to Pending State
+    if (fileInput) {
+        // Use file name but maybe sanitize to match what the upload utility does
+        const safeName = fileInput.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+        
+        // Construct the future URL so the JSON reference is correct even before upload
+        const estimatedUrl = `https://${REPO_OWNER}.github.io/${REPO_NAME}/uploads/${safeName}`;
+        finalUrl = estimatedUrl;
+        
+        // Add to pending uploads queue in context
+        // This file will only be uploaded when "Salvar" is clicked
+        setPendingUpload(newItemId, fileInput);
     }
 
-    // Check if we are updating an existing item (it has an id)
     if (editingItem.id) {
         const updatedItem: any = {
             type: itemType,
@@ -139,18 +136,28 @@ const AdminDashboard: React.FC = () => {
             iconName: editingItem.iconName,
             targetPageId: editingItem.targetPageId
         };
+        
+        // If file input, update context pending upload
+        if (fileInput) {
+             setPendingUpload(editingItem.id, fileInput);
+             // Since context function handles setting unsaved changes, we are good.
+        }
 
         updateItemInPage(selectedPageId, editingItem.id, updatedItem);
     } else {
         // Create New
         const newItem: PageItem = {
-            id: Date.now().toString(),
+            id: newItemId,
             type: itemType,
             label: editingItem.label || 'New Item',
             url: finalUrl || '#',
             iconName: editingItem.iconName,
             targetPageId: editingItem.targetPageId
         } as any;
+        
+         if (fileInput) {
+             setPendingUpload(newItemId, fileInput);
+        }
         
         addItemToPage(selectedPageId, newItem);
     }

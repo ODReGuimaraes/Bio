@@ -55,6 +55,9 @@ interface ContentContextType {
   saveChanges: () => void;
   revertChanges: () => void;
   publishChanges: (token: string) => Promise<void>;
+  pendingUploads: Map<string, File>;
+  setPendingUpload: (itemId: string, file: File) => void;
+  clearPendingUpload: (itemId: string) => void;
 }
 
 const ContentContext = createContext<ContentContextType | undefined>(undefined);
@@ -64,6 +67,21 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [draftContent, setDraftContent] = useState<AppContent>(INITIAL_CONTENT);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [pendingUploads, setPendingUploads] = useState<Map<string, File>>(new Map());
+
+  // Helper to update pending uploads
+  const setPendingUpload = (itemId: string, file: File) => {
+      setPendingUploads(prev => new Map(prev).set(itemId, file));
+      setHasUnsavedChanges(true); // Tracking pending upload as a change
+  };
+
+  const clearPendingUpload = (itemId: string) => {
+      setPendingUploads(prev => {
+          const newMap = new Map(prev);
+          newMap.delete(itemId);
+          return newMap;
+      });
+  };
 
   useEffect(() => {
     const loadContent = async () => {
@@ -143,8 +161,13 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
   const publishChanges = async (token: string) => {
       try {
           setIsPublishing(true);
-          await uploadContentToGitHub(draftContent, token);
+          // Pass the pending uploads map to the upload function
+          await uploadContentToGitHub(draftContent, token, pendingUploads);
+          
           setContent(draftContent);
+          // Clear successful uploads
+          setPendingUploads(new Map());
+          
           // Update local storage to reflect the latest published version
           localStorage.setItem(STORAGE_KEY, JSON.stringify(draftContent));
           setHasUnsavedChanges(false);
@@ -161,6 +184,7 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
   const revertChanges = () => {
     setDraftContent(content);
     setHasUnsavedChanges(false);
+    setPendingUploads(new Map()); // Clear any pending uploads on revert
     localStorage.removeItem(STORAGE_KEY); // Clear draft
   };
 
@@ -252,7 +276,10 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
       saveChanges,
       revertChanges,
       publishChanges,
-      isPublishing
+      isPublishing,
+      setPendingUpload,
+      clearPendingUpload,
+      pendingUploads
     }}>
       {children}
     </ContentContext.Provider>
