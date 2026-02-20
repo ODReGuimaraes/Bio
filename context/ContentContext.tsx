@@ -3,6 +3,7 @@ import { AppContent, Page, PageItem, ContentItem } from '../types';
 import { uploadContentToGitHub, REPO_OWNER, REPO_NAME } from '../utils/github';
 
 const STORAGE_KEY = 'od_renata_bio_content';
+const PROCESSING_KEY = 'od_renata_processing_timestamp';
 const CONTENT_URL = `https://${REPO_OWNER}.github.io/${REPO_NAME}/content.json`;
 
 const INITIAL_CONTENT: AppContent = {
@@ -44,6 +45,7 @@ interface ContentContextType {
   draftContent: AppContent;
   hasUnsavedChanges: boolean;
   isPublishing: boolean;
+  isProcessing: boolean; // Site is rebuilding
   addPage: (page: Page) => void;
   updatePage: (pageId: string, updates: Partial<Page>) => void;
   deletePage: (pageId: string) => void;
@@ -67,6 +69,7 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
   const [draftContent, setDraftContent] = useState<AppContent>(INITIAL_CONTENT);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false); // New state
   const [pendingUploads, setPendingUploads] = useState<Map<string, File>>(new Map());
 
   // Helper to update pending uploads
@@ -84,6 +87,24 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
   };
 
   useEffect(() => {
+    const checkProcessingStatus = () => {
+        const timestamp = localStorage.getItem(PROCESSING_KEY);
+        if (timestamp) {
+            const timePassed = Date.now() - parseInt(timestamp, 10);
+            if (timePassed < 60000) { // 1 minute
+                setIsProcessing(true);
+                // Set timeout to clear it
+                setTimeout(() => {
+                    setIsProcessing(false);
+                    localStorage.removeItem(PROCESSING_KEY);
+                }, 60000 - timePassed);
+            } else {
+                localStorage.removeItem(PROCESSING_KEY);
+            }
+        }
+    };
+    checkProcessingStatus();
+
     const loadContent = async () => {
         try {
             const response = await fetch(`${CONTENT_URL}?t=${Date.now()}`);
@@ -101,17 +122,29 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
                         // We check if the saved content is deeply equal to the fetched content
                         // Using JSON.stringify for deep comparison (keys must be in same order, which they usually are for same structure)
                         // If they match, we assume NO unsaved changes, even if localStorage exists.
-                        const hasDiff = JSON.stringify(parsed) !== JSON.stringify(data);
+                        const isIdentical = JSON.stringify(parsed) === JSON.stringify(data);
                         
                         setDraftContent(parsed);
+
                         // If the local content matches the remote content, we don't need to consider it "unsaved"
                         // This fixes the issue where refreshing after a publish (even after propagation) shows "unsaved changes"
                         // Also, if they are identical, we clear the local storage to avoid confusion if remote changes by another user
-                        if (JSON.stringify(parsed) === JSON.stringify(data)) {
+                        
+                        // BUT: If isProcessing is true, trust local version and don't flag unsaved changes
+                        // The user just published, so remote is stale.
+                        const processing = localStorage.getItem(PROCESSING_KEY);
+                        let isStillProcessing = false;
+                        if (processing && (Date.now() - parseInt(processing, 10) < 60000)) {
+                             isStillProcessing = true;
+                        }
+
+                        if (isIdentical) {
                              localStorage.removeItem(STORAGE_KEY);
                              setHasUnsavedChanges(false);
                         } else {
-                             setHasUnsavedChanges(true); // User has local changes or remote hasn't updated yet
+                             // If we are processing, it's not "unsaved", it's "pending publish"
+                             // We suppress the unsaved warning if we know we just published
+                             setHasUnsavedChanges(!isStillProcessing); 
                         }
                         
                         setDraftContent(parsed);
@@ -170,8 +203,19 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
           
           // Update local storage to reflect the latest published version
           localStorage.setItem(STORAGE_KEY, JSON.stringify(draftContent));
+          
+          // Set Processing Timestamp
+          const now = Date.now();
+          localStorage.setItem(PROCESSING_KEY, now.toString());
+          setIsProcessing(true);
+          setTimeout(() => {
+              setIsProcessing(false);
+              localStorage.removeItem(PROCESSING_KEY);
+          }, 60000);
+
           setHasUnsavedChanges(false);
-          alert("Changes published successfully! Note: It may take a few minutes for changes to appear on the public site.");
+          // Alert is removed in favor of UI feedback
+          // alert("Changes published successfully! Note: It may take a few minutes for changes to appear on the public site.");
       } catch (error) {
           console.error("Failed to publish changes", error);
           alert("Failed to publish changes. Check console for details.");
@@ -277,6 +321,7 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
       revertChanges,
       publishChanges,
       isPublishing,
+      isProcessing,
       setPendingUpload,
       clearPendingUpload,
       pendingUploads

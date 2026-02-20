@@ -21,6 +21,7 @@ const AdminDashboard: React.FC = () => {
     revertChanges,
     publishChanges,
     isPublishing,
+    isProcessing,
     setPendingUpload
   } = useContent();
   const navigate = useNavigate();
@@ -201,6 +202,29 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
+      
+      {/* Processing Modal */}
+      {isProcessing && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full text-center border-t-4 border-indigo-500 animate-in fade-in zoom-in duration-300">
+             <div className="mx-auto mb-4 h-12 w-12 text-indigo-500 flex justify-center">
+                <svg className="animate-spin h-12 w-12" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+             </div>
+             <h3 className="text-lg font-bold text-slate-800 mb-2">Processando Atualização</h3>
+             <p className="text-slate-600 mb-4 text-sm">
+               Suas alterações foram enviadas e o site está sendo regenerado. 
+               Isso pode levar cerca de 1 minuto.
+             </p>
+             <div className="text-xs text-slate-400 bg-slate-50 p-2 rounded">
+                Você pode fechar esta aba se desejar. O processo continuará automaticamente.
+             </div>
+          </div>
+        </div>
+      )}
+
       {/* Sidebar */}
       <aside className="w-64 bg-white border-r border-slate-200 flex flex-col">
         <div className="p-4 border-b border-slate-100 flex justify-between items-center">
